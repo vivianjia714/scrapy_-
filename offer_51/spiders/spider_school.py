@@ -9,9 +9,10 @@ from offer_51.items import Offer51Item
 import csv
 import sys
 import urllib
-import sys
-reload(sys)
-sys.setdaulftencoding('utf-8')
+import json
+from selenium import webdriver
+import cgi
+
 
 class Spider_51(scrapy.Spider):
  
@@ -20,7 +21,7 @@ class Spider_51(scrapy.Spider):
     start_urls = ['https://www.51offer.com/']
     
     def parse(self, response):
-        for page in range(1,5):
+        for page in range(1,2):
 #            baseurl = 'https://www.51offer.com/school/uk-all-' 英国院校
 #            baseurl = 'https://www.51offer.com/school/us-all-' 美国院校
 #            baseurl = 'https://www.51offer.com/school/au-all-' 澳洲院校
@@ -45,13 +46,14 @@ class Spider_51(scrapy.Spider):
     def parse_detail(self,response):
         
         url = response.url
-#        print url
+               
+        url1 =  url[31:]
         
+        majorlisturl = 'https://www.51offer.com/school/specialty_'+ url1 + '?a=1'+'&pageNo=1' 
+                            
         titlelist = response.xpath("//h1[@class='cname']/text()").extract()
         title =  titlelist[0].strip()
-#        print title
-        
-        
+
         hotmajorlist = response.xpath("//div[@class='rr']/text()").extract()
         
         if hotmajorlist:
@@ -60,8 +62,7 @@ class Spider_51(scrapy.Spider):
         else:
             hotmajor =''
         
-#        print hotmajor
-        
+       
 #        IELTS_gradelist = response.xpath("//*[@id='school-introduction']/div[2]/div[1]/div/text()").extract()
         IELTS_gradelist = response.xpath("//*[@class='intro-lists']/div[2]/div[1]/text()").extract()
         if IELTS_gradelist:
@@ -69,8 +70,7 @@ class Spider_51(scrapy.Spider):
         else:
             IELTS_grade = ''
             
-#        print IELTS_grade
-        
+       
         QSranklist = response.xpath("//div[@class='rank-list']/div[2]/div[1]/text()").extract()
         if QSranklist:
             
@@ -78,8 +78,7 @@ class Spider_51(scrapy.Spider):
             QSrank = QSranklist[0]
         else:
             QSrank = ''    
-#        print QSrank
-        
+       
         
         Timeranklist = response.xpath("//div[@class='rank-list']/div[1]/div[1]/text()").extract()
         if Timeranklist:
@@ -87,29 +86,88 @@ class Spider_51(scrapy.Spider):
             
         else:
             Timerank = ''
-#        print Timerank
 
-
-#        school_logolist = response.xpath("//div[@class='school-logo']/img/@src").extract()
-        
-#        school_logo = school_logolist[0]
-#        print school_logo
-
-      
+              
         item = Offer51Item()
         
-        item['school_url'] = url 
+        item['school_url'] = response.url
         item['title'] = title
         item['hotmajor'] = hotmajor   
         item['IELTS_grade'] = IELTS_grade
         item['QSrank'] = QSrank
         item['Timerank'] = Timerank
-#        item['school_logo'] = school_logo
+#        item['majorname'] = majorname.decode('unicode-escape')
+
+           
+        yield scrapy.Request(url=majorlisturl, callback=self.parse_major, meta={ 'item': item },dont_filter=True)
+    
+            
+        
+    def parse_major(self, response):  #当前页
+        
+        item = response.meta['item']  
+                
+        majornamelist = response.xpath("//div[@class='major-name']/a[1]/text()").extract()
+        
+        degreelist = response.xpath("//div[@class='major-tag']/a[1]/text()").extract()
+            
+        majortypelist = response.xpath("//div[@class='major-tag']/a[2]/text()").extract()
+          
+        majordetail = zip(majornamelist,degreelist,majortypelist)
+        
+        nextlink = ''.join(response.xpath("//a[@class='next']/@href").extract())  
+        
+        for major,degree,type in majordetail:
+            
+                     
+            item['majorname'] = major
+            item['degree'] = degree
+            item['type'] = type
+            
+            websiteurllist = response.xpath("//div[@class='major-name']/a[1]/@href").extract()
+        
+            for websiteurl in websiteurllist:
+                   
+                yield scrapy.Request(url=websiteurl,callback=self.parse_website, meta={ 'item': item },dont_filter=True)#跳转到下一页
+
+    
+        if nextlink:
+            
+            yield scrapy.Request(url=nextlink,callback=self.parse_major,meta={ 'item': item },dont_filter=True)  #分页
+        
+                                                                                 
+       
+              
+             
+    def parse_website(self, response):
+    
+        item = response.meta['item']
+        
+        officalweb = response.xpath("//iframe[@id='majorframe']/@src").extract()
+        
+        item['weburl'] = officalweb[0]
+        
+        yield item
+             
+         
         
 
+
+
+            
+       
         
-     
-        yield item
-        
-        
+            
+           
     
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        

@@ -26,6 +26,14 @@ class Offer51Item(scrapy.Item):
     Timerank = scrapy.Field()
     #世界排名
     QSrank = scrapy.Field()
+    
+    majorname = scrapy.Field()
+    
+    type = scrapy.Field()
+    
+    degree = scrapy.Field()
+    
+    weburl = scrapy.Field()
     #学校logo图片地址
 #    school_logo = scrapy.Field()
     #图片
