@@ -21,11 +21,13 @@ class Spider_51(scrapy.Spider):
     start_urls = ['https://www.51offer.com/']
     
     def parse(self, response):
-        for page in range(1,2):
+        for page in range(1,4):
 #            baseurl = 'https://www.51offer.com/school/uk-all-' 英国院校
 #            baseurl = 'https://www.51offer.com/school/us-all-' 美国院校
 #            baseurl = 'https://www.51offer.com/school/au-all-' 澳洲院校
-            baseurl = 'https://www.51offer.com/school/sg-all-'
+#            baseurl = 'https://www.51offer.com/school/sg-all-' 新加坡院校
+#            baseurl = 'https://www.51offer.com/school/hk-all-' 香港院校
+            baseurl = 'https://www.51offer.com/school/nz-all-'
             listurl = baseurl + str(page)+ '.html?rankType=this_times'
 #            print listurl
             yield Request(url=listurl,callback=self.parse_page,dont_filter=True)
@@ -86,16 +88,24 @@ class Spider_51(scrapy.Spider):
             
         else:
             Timerank = ''
-
+        
+        englishtitlelist = response.xpath("//span[@class='ename']/text()").extract()
+        
+        if englishtitlelist:
+            englishtitle = englishtitlelist[0]
+            
+        else:
+            englishtitle = ''
               
         item = Offer51Item()
         
-        item['school_url'] = response.url
+#        item['school_url'] = response.url
         item['title'] = title
-        item['hotmajor'] = hotmajor   
-        item['IELTS_grade'] = IELTS_grade
-        item['QSrank'] = QSrank
-        item['Timerank'] = Timerank
+#        item['hotmajor'] = hotmajor   
+#        item['IELTS_grade'] = IELTS_grade
+#        item['QSrank'] = QSrank
+#        item['Timerank'] = Timerank
+        item['englishtitle'] = englishtitle
 #        item['majorname'] = majorname.decode('unicode-escape')
 
            
@@ -103,53 +113,73 @@ class Spider_51(scrapy.Spider):
     
             
         
-    def parse_major(self, response):  #当前页
+    def parse_major(self, response):
         
-        item = response.meta['item']  
+        item = response.meta['item']
                 
-        majornamelist = response.xpath("//div[@class='major-name']/a[1]/text()").extract()
-        
-        degreelist = response.xpath("//div[@class='major-tag']/a[1]/text()").extract()
-            
-        majortypelist = response.xpath("//div[@class='major-tag']/a[2]/text()").extract()
-          
-        majordetail = zip(majornamelist,degreelist,majortypelist)
-        
-        nextlink = ''.join(response.xpath("//a[@class='next']/@href").extract())  
-        
-        for major,degree,type in majordetail:
-            
-                     
-            item['majorname'] = major
-            item['degree'] = degree
-            item['type'] = type
-            
-            websiteurllist = response.xpath("//div[@class='major-name']/a[1]/@href").extract()
-        
-            for websiteurl in websiteurllist:
-                   
-                yield scrapy.Request(url=websiteurl,callback=self.parse_website, meta={ 'item': item },dont_filter=True)#跳转到下一页
-
-    
+        nextlink = 'majorlisturl'.join(response.xpath("//a[@class='next']/@href").extract())    
+                              
         if nextlink:
             
-            yield scrapy.Request(url=nextlink,callback=self.parse_major,meta={ 'item': item },dont_filter=True)  #分页
+#            print nextlink
+            
+            yield scrapy.Request(url=nextlink,callback=self.parse_major,meta={ 'item': item },dont_filter=True)        
+                            
+                                       
+        websiteurllist = response.xpath("//div[@class='major-name']/a[1]/@href").extract()
+      
+        for websiteurl in websiteurllist:
         
-                                                                                 
-       
+            yield scrapy.Request(url=websiteurl,callback=self.parse_website, meta={ 'item': item },dont_filter=True)
+            
+        
               
              
     def parse_website(self, response):
     
         item = response.meta['item']
         
-        officalweb = response.xpath("//iframe[@id='majorframe']/@src").extract()
+#        officalweb = response.xpath("//iframe[@id='majorframe']/@src").extract()
         
-        item['weburl'] = officalweb[0]
+#        item['weburl'] = officalweb[0]
+        
+        enmajorname = response.xpath("//h2[@class='ename']/text()").extract()
+        
+#        print type(enmajorname[0].encode('utf-8'))
+        
+        cnmajorname = response.xpath("//h2[@class='ename']/i/text()").extract()
+        
+#        print type(cnmajorname[0].encode('utf-8'))
+        
+        degreetype = response.xpath("//div[@class='wrap']/p/span[1]/text()").extract()
+        
+#        print type(degreetype[0].encode('utf-8'))
+
+        degreetype1 = degreetype[0][5:]
+
+#        print degreetype1        
+        officalurl = response.xpath("//iframe[@id='majorframe']/@src").extract()
+        
+        majortype = response.xpath("//div[@class='wrap']/p/span[2]/text()").extract()
+        
+        majortype1 = majortype[0][5:]
+        
+#        print majortype1.encode('gbk')
+        
+#        print officalurl[0]
+        
+        item['enmajorname'] = enmajorname[0].encode('utf-8')
+        
+        item['cnmajorname'] = cnmajorname[0].encode('utf-8')
+        
+        item['degreetype'] = degreetype1.encode('utf-8')
+        
+        item['officalurl'] = officalurl[0].encode('utf-8')
+        
+        item['majortype'] = majortype1.encode('utf-8')
         
         yield item
-             
-         
+    
         
 
 

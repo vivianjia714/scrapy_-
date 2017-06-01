@@ -17,23 +17,28 @@ class Offer51Item(scrapy.Item):
     #学校名称
     title = scrapy.Field()
     #链接
-    school_url = scrapy.Field()
+#    school_url = scrapy.Field()
     #雅思分数
-    IELTS_grade = scrapy.Field()
+#    IELTS_grade = scrapy.Field()
     #热门专业
-    hotmajor = scrapy.Field()
+#    hotmajor = scrapy.Field()
     #国内排名
-    Timerank = scrapy.Field()
+#    Timerank = scrapy.Field()
     #世界排名
-    QSrank = scrapy.Field()
+#    QSrank = scrapy.Field()
     
-    majorname = scrapy.Field()
+    enmajorname = scrapy.Field()
     
-    type = scrapy.Field()
+    cnmajorname = scrapy.Field()
+        
+    degreetype = scrapy.Field()
     
-    degree = scrapy.Field()
+    englishtitle = scrapy.Field()
     
-    weburl = scrapy.Field()
+    officalurl = scrapy.Field()
+    
+    majortype = scrapy.Field()
+#    weburl = scrapy.Field()
     #学校logo图片地址
 #    school_logo = scrapy.Field()
     #图片
